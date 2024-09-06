@@ -1,10 +1,6 @@
-let nextUnitOfWork = {
-	dom: null,
-	props: null,
-	parent: null,
-	type: null,
-	child: null,
-};
+let nextUnitOfWork = null;
+
+let rootUnitOfWork = null;
 
 function performUnitOfWork(unitOfWork) {
 	// create a dom if the fiber doesn't have a dom yet
@@ -13,9 +9,9 @@ function performUnitOfWork(unitOfWork) {
 	}
 
 	// attach the dom to the parent.
-	if (unitOfWork.parent) {
-		unitOfWork.parent.dom.appendChild(unitOfWork.dom);
-	}
+	// if (unitOfWork.parent) {
+	// 	unitOfWork.parent.dom.appendChild(unitOfWork.dom);
+	// }
 
 	// make fibers for every child
 	let index = 0;
@@ -62,20 +58,37 @@ function performUnitOfWork(unitOfWork) {
 function idleCallback(deadline) {
 	while (deadline.timeRemaining() > 1 && nextUnitOfWork) {
 		nextUnitOfWork = performUnitOfWork(nextUnitOfWork);
+		if (!nextUnitOfWork) {
+			commitUnitOfWork(rootUnitOfWork);
+		}
 	}
 
 	requestIdleCallback(idleCallback);
 }
 
-requestIdleCallback(idleCallback);
+function commitUnitOfWork(unitOfWork) {
+	if (unitOfWork.parent) {
+		unitOfWork.parent.dom.appendChild(unitOfWork.dom);
+	}
+	let sibling = unitOfWork.sibling;
+	while (sibling) {
+		commitUnitOfWork(sibling);
+		sibling = sibling.sibling;
+	}
+	let child = unitOfWork.child;
+	if (child) {
+		commitUnitOfWork(child);
+	}
+}
 
 function render(element, container) {
-	nextUnitOfWork = {
+	rootUnitOfWork = {
 		dom: container,
 		props: {
 			children: [element],
 		},
 	};
+	nextUnitOfWork = rootUnitOfWork;
 }
 
 function makeDom(fiber) {
@@ -101,4 +114,5 @@ function makeDom(fiber) {
 // 	container.appendChild(node);
 // }
 
+requestIdleCallback(idleCallback);
 export default { render };
