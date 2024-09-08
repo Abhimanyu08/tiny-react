@@ -1,19 +1,29 @@
 /** @jsx  TinyReact.createElement*/
 import TinyReact from "./tiny-react.js";
-import TinyReactDom from "./tiny-react-dom.js";
+
+function Greeting({ name }) {
+	return <p>Hello, {name}</p>;
+}
+
+function Counter({ startCount }) {
+	const [count, setCount] = TinyReact.useState(startCount);
+	return (
+		<div>
+			<span>{count}</span>
+			<button onclick={() => setCount((p) => p + 1)}>
+				Click to increase count
+			</button>
+		</div>
+	);
+}
 
 const component = (
 	<div>
-		<p>
-			hello <strong>world</strong>. I am making a <em>tiny react</em>
-		</p>
-		<details>
-			<summary>open to know more</summary>
-			there's nothing more lol
-		</details>
+		<p>hello</p>
+		<p>hello world</p>
+		<Counter startCount={0} />
 	</div>
 );
 
-console.log(component);
 const container = document.getElementById("root");
-TinyReactDom.render(component, container);
+TinyReact.render(component, container);
