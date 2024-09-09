@@ -16,9 +16,9 @@ function Counter({
     onclick: () => setCount(p => p + 1)
   }, "Click to increase count"));
 }
-const component = TinyReact.createElement(Counter, {
+const component = TinyReact.createElement("div", null, TinyReact.createElement("p", null, "hello I am making a tiny react"), TinyReact.createElement("p", null, "hope these p tags don't re-render"), TinyReact.createElement(Counter, {
   startCount: 0
-});
+}));
 const container = document.getElementById("root");
 TinyReact.render(component, container);
 

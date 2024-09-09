@@ -21,7 +21,13 @@ function Counter({ startCount }) {
 	);
 }
 
-const component = <Counter startCount={0} />;
+const component = (
+	<div>
+		<p>hello I am making a tiny react</p>
+		<p>hope these p tags don't re-render</p>
+		<Counter startCount={0} />
+	</div>
+);
 
 const container = document.getElementById("root");
 TinyReact.render(component, container);

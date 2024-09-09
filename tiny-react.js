@@ -21,7 +21,7 @@ function createTextElement(text) {
 }
 let nextFiber = null;
 
-let rootFiber = null;
+let wipFiber = null;
 let deletions = [];
 
 function handleComponent(fiber) {
@@ -109,7 +109,7 @@ function idleCallback(deadline) {
 				findParentWithDom(fiber).dom.removeChild(fiber.dom)
 			);
 			deletions = [];
-			commitFiber(rootFiber);
+			commitFiber(wipFiber);
 		}
 	}
 
@@ -149,13 +149,13 @@ function commitFiber(fiber) {
 }
 
 function render(element, container) {
-	rootFiber = {
+	wipFiber = {
 		dom: container,
 		props: {
 			children: [element],
 		},
 	};
-	nextFiber = rootFiber;
+	nextFiber = wipFiber;
 }
 
 function makeDom(fiber) {
@@ -198,6 +198,7 @@ function useState(intialValue) {
 			props: { ...currentFiber.props, children: [] },
 		};
 		currentFiber.parent.child = nextFiber;
+		wipFiber = nextFiber;
 	};
 
 	return [currentFiber.state, setState];
