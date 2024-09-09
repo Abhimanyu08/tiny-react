@@ -49,7 +49,7 @@ function reconcileChildren(fiber) {
 				tag = "REPLACE";
 			}
 		} else if (!child) {
-			deletions.push(alternateChild.dom);
+			deletions.push(alternateChild);
 		}
 		if (child) {
 			let newFiber = {
@@ -105,12 +105,23 @@ function idleCallback(deadline) {
 	while (deadline.timeRemaining() > 1 && nextFiber) {
 		nextFiber = performWorkOnFiber(nextFiber);
 		if (!nextFiber) {
-			console.log(deletions);
+			deletions.forEach((fiber) =>
+				findParentWithDom(fiber).dom.removeChild(fiber.dom)
+			);
+			deletions = [];
 			commitFiber(rootFiber);
 		}
 	}
 
 	requestIdleCallback(idleCallback);
+}
+
+function findParentWithDom(fiber) {
+	let parent = fiber.parent;
+	while (!parent.dom) {
+		parent = parent.parent;
+	}
+	return parent;
 }
 
 function commitFiber(fiber) {

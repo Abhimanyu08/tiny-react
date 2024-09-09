@@ -1,15 +1,18 @@
 /** @jsx  TinyReact.createElement*/
 import TinyReact from "./tiny-react.js";
-function Greeting({
-  name
+function Warning({
+  count
 }) {
-  return TinyReact.createElement("p", null, "Hello, ", name);
+  if (count === 0) return TinyReact.createElement("p", null, "start");
+  return null;
 }
 function Counter({
   startCount
 }) {
   const [count, setCount] = TinyReact.useState(startCount);
-  return TinyReact.createElement("div", null, TinyReact.createElement("span", null, count), count > 3 ? TinyReact.createElement("p", null, "count is greater than 3") : "", TinyReact.createElement("button", {
+  return TinyReact.createElement("div", null, TinyReact.createElement(Warning, {
+    count: count
+  }), TinyReact.createElement("span", null, count), TinyReact.createElement("button", {
     onclick: () => setCount(p => p + 1)
   }, "Click to increase count"));
 }
