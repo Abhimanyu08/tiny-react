@@ -9,13 +9,13 @@ function Counter({
   startCount
 }) {
   const [count, setCount] = TinyReact.useState(startCount);
-  return TinyReact.createElement("div", null, TinyReact.createElement("span", null, count), TinyReact.createElement("button", {
+  return TinyReact.createElement("div", null, TinyReact.createElement("span", null, count), count > 3 ? TinyReact.createElement("p", null, "count is greater than 3") : "", TinyReact.createElement("button", {
     onclick: () => setCount(p => p + 1)
   }, "Click to increase count"));
 }
-const component = TinyReact.createElement("div", null, TinyReact.createElement("p", null, "hello"), TinyReact.createElement("p", null, "hello world"), TinyReact.createElement(Counter, {
+const component = TinyReact.createElement(Counter, {
   startCount: 0
-}));
+});
 const container = document.getElementById("root");
 TinyReact.render(component, container);
 

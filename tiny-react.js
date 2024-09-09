@@ -22,48 +22,68 @@ function createTextElement(text) {
 let nextFiber = null;
 
 let rootFiber = null;
+let deletions = [];
 
 function handleComponent(fiber) {
 	let newChildren = fiber.type(fiber.props);
-	console.log(
-		"old children",
-		fiber.alternate ? fiber.alternate.props.children : undefined
-	);
-	console.log("new children", newChildren);
 	fiber.props.children = [newChildren];
+}
+
+function reconcileChildren(fiber) {
+	let index = 0;
+	let previousSibling = null;
+	let alternateChild = fiber.alternate ? fiber.alternate.child : null;
+
+	while (index < fiber.props.children.length || alternateChild) {
+		const child = fiber.props.children[index];
+		let tag = "";
+		let dom = null;
+		if (!alternateChild) {
+			tag = "ADD";
+		} else if (child) {
+			if (alternateChild.type === child.type) {
+				tag = "UPDATE";
+				dom = alternateChild.dom;
+			}
+			if (alternateChild.type !== child.type) {
+				tag = "ADD";
+				deletions.push(alternateChild.dom);
+			}
+		} else if (!child) {
+			deletions.push(alternateChild.dom);
+		}
+		if (child) {
+			let newFiber = {
+				dom,
+				props: child.props,
+				parent: fiber,
+				type: child.type,
+				alternate: alternateChild,
+				tag,
+			};
+
+			if (index === 0) {
+				fiber.child = newFiber;
+			} else {
+				previousSibling.sibling = newFiber;
+			}
+
+			previousSibling = newFiber;
+		}
+		index++;
+		alternateChild = alternateChild?.sibling;
+	}
 }
 
 function performWorkOnFiber(fiber) {
 	// create a dom if the fiber doesn't have a dom yet
 	if (typeof fiber.type === "function") {
 		handleComponent(fiber);
-	} else if (!fiber.dom) {
-		fiber.dom = makeDom(fiber);
 	}
+	fiber.dom = makeDom(fiber);
 	// make fibers for every child
-	let index = 0;
-	let previousSibling = null;
-	for (let child of fiber.props.children) {
-		let newFiber = {
-			dom: null,
-			props: child.props,
-			parent: fiber,
-			type: child.type,
-		};
-
-		if (index === 0) {
-			fiber.child = newFiber;
-		} else {
-			previousSibling.sibling = newFiber;
-		}
-
-		previousSibling = newFiber;
-		index++;
-	}
-
+	reconcileChildren(fiber);
 	// return next unit of work
-
-	// if it has a child, return that
 	if (fiber.child) {
 		return fiber.child;
 	}
@@ -86,6 +106,7 @@ function idleCallback(deadline) {
 	while (deadline.timeRemaining() > 1 && nextFiber) {
 		nextFiber = performWorkOnFiber(nextFiber);
 		if (!nextFiber) {
+			console.log(deletions);
 			commitFiber(rootFiber);
 		}
 	}
@@ -94,6 +115,7 @@ function idleCallback(deadline) {
 }
 
 function commitFiber(fiber) {
+	console.log(fiber);
 	let parent = fiber.parent;
 	if (parent && fiber.dom) {
 		while (!parent.dom) {
@@ -123,12 +145,17 @@ function render(element, container) {
 }
 
 function makeDom(fiber) {
-	let node;
+	if (typeof fiber.type === "function") return null;
+	let node = fiber.dom;
+	// if fiber's tag is add, make a new node
+	// if fiber's tag is update, update the current dom node
 
-	if (fiber.type === "TEXT_ELEMENT") {
-		node = document.createTextNode("");
-	} else {
-		node = document.createElement(fiber.type);
+	if (!node) {
+		if (fiber.type === "TEXT_ELEMENT") {
+			node = document.createTextNode("");
+		} else {
+			node = document.createElement(fiber.type);
+		}
 	}
 	for (let key of Object.keys(fiber.props)) {
 		if (key === "children") continue;
@@ -150,9 +177,13 @@ function useState(intialValue) {
 		} else {
 			newStateValue = newValue;
 		}
-		currentFiber.state = newStateValue;
-		console.log(currentFiber);
-		nextFiber = { ...currentFiber, alternate: currentFiber };
+		nextFiber = {
+			...currentFiber,
+			state: newStateValue,
+			alternate: currentFiber,
+			props: { ...currentFiber.props, children: [] },
+		};
+		currentFiber.parent.child = nextFiber;
 	};
 
 	return [currentFiber.state, setState];
