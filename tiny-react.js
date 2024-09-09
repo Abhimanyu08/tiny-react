@@ -46,8 +46,7 @@ function reconcileChildren(fiber) {
 				dom = alternateChild.dom;
 			}
 			if (alternateChild.type !== child.type) {
-				tag = "ADD";
-				deletions.push(alternateChild.dom);
+				tag = "REPLACE";
 			}
 		} else if (!child) {
 			deletions.push(alternateChild.dom);
@@ -115,13 +114,17 @@ function idleCallback(deadline) {
 }
 
 function commitFiber(fiber) {
-	console.log(fiber);
 	let parent = fiber.parent;
 	if (parent && fiber.dom) {
 		while (!parent.dom) {
 			parent = parent.parent;
 		}
-		parent.dom.appendChild(fiber.dom);
+		if (fiber.tag === "ADD") {
+			parent.dom.appendChild(fiber.dom);
+		}
+		if (fiber.tag === "REPLACE") {
+			parent.dom.replaceChild(fiber.dom, fiber.alternate.dom);
+		}
 	}
 	let sibling = fiber.sibling;
 	while (sibling) {
